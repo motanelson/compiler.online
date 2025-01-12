@@ -1,2 +1,2 @@
-# debug.sql
-example of sql registry debug log
+# soccer.football.europe
+europe football soccer game use key left rigth up to game key down to try again
