@@ -29,9 +29,9 @@ HTML_TEMPLATE = '''
     </style>
 </head>
 <body>
-    <h1>Upload a freebasic File</h1>
+    <h1>Upload a CS File</h1>
     <form method="post" action="/upload" enctype="multipart/form-data">
-        <input type="file" name="cfile" accept=".bas" required />
+        <input type="file" name="cfile" accept=".bin" required />
         <button type="submit">Upload and Compile</button>
     </form>
 </body>
@@ -52,9 +52,8 @@ HTML_Dowload = '''
     </style>
 </head>
 <body>
-    <h1>Download a freebasic File</h1>
-    <a href="$file.exe">exe</a><br>
-    
+    <h1>Download a C File</h1>
+    <a href="$file.S">source</a><br>
     stdio:<br>
     $stdio<br>
     sterror:<br>
@@ -78,7 +77,7 @@ HTML_error = '''
     </style>
 </head>
 <body>
-    <h1>error a freebasic File</h1>
+    <h1>error a CS File</h1>
     stdio:<br>
     $stdio<br>
     sterror:<br>
@@ -104,22 +103,22 @@ def upload_file():
     if file.filename == '':
         return "No selected file", 400
 
-    if not file.filename.endswith('.bas'):
-        return "Only .c files are allowed", 400
+    if not file.filename.endswith('.bin'):
+        return "Only .bin files are allowed", 400
 
     # Salvar o arquivo
-    c_file_path = os.path.join(UPLOAD_FOLDER, str(file_counters)+".bas")
+    c_file_path = os.path.join(UPLOAD_FOLDER, str(file_counters)+".bin")
     file.save(c_file_path)
 
     # Nome do executável
-    executable_name = f"{file_counters}.exe"
+    executable_name = f"{file_counters}.S"
     executable_path = os.path.join(BUILD_FOLDER, executable_name)
 
     # Executar build.sh com o contador como argumento
     try:
-        subprocess.run(['starts.cmd',str(file_counters)], check=True)  # Executa o script starts.sh
+        subprocess.run(['/usr/bin/bash','./start.sh',str(file_counters)], check=True)  # Executa o script starts.sh
         result = subprocess.run(
-            ['makes.cmd', str(file_counters)],
+            ['/usr/bin/bash','./make.sh', str(file_counters)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -127,7 +126,7 @@ def upload_file():
         )
         if result.stdout.find("err")<0 and result.stderr.find("err")<0:
             result = subprocess.run(
-                ['build.cmd', str(file_counters)],
+                ['/usr/bin/bash' ,'./build.sh', str(file_counters)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -136,10 +135,10 @@ def upload_file():
         
         
 
-            subprocess.run(['ends.cmd',str(file_counters)], check=True)  # Executa o script starts.sh
+            subprocess.run(['/usr/bin/bash','./end.sh',str(file_counters)], check=True)  # Executa o script starts.sh
             s=HTML_Dowload.replace("$stdio",result.stdout.replace("\n","<br>"))
             s=s.replace("$sterror",result.stderr.replace("\n","<br>"))
-            s=s.replace("$file", ("/download/"+executable_name).replace(".exe",""))
+            s=s.replace("$file", ("/download/"+executable_name).replace(".S",""))
             file_counter += 1
             return s
         else:
